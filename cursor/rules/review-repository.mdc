@@ -1,0 +1,207 @@
+markdown
+
+---
+description: Perform a repository-wide audit of security, correctness, readability, performance, architecture, reliability, and technical debt.
+alwaysApply: false
+---
+
+# Repository-Wide Code Review
+
+## Purpose
+
+Perform a structured audit of the accessible repository to identify meaningful defects, security risks, architectural weaknesses, performance bottlenecks, and systemic maintainability problems.
+
+Follow the standards in @code-review-standards.mdc.
+
+The review is read-only. Do not modify files, apply fixes, stage changes, or create commits.
+
+## 1. Establish Repository Context
+
+Before reporting findings:
+1. Identify the languages, frameworks, application type, and major dependencies.
+2. Map the repository structure and important modules.
+3. Identify architectural boundaries and critical execution paths.
+4. Inspect available documentation and project conventions.
+5. Identify tests, build scripts, configuration, database schemas, migrations, and deployment files.
+6. Determine what can be inspected and verified in the current environment.
+
+Do not assume the repository's purpose or architecture without examining the available evidence.
+
+## 2. Review the Repository in Logical Areas
+
+Inspect relevant areas systematically.
+
+### A. Architecture and Module Boundaries
+- Separation of concerns and responsibility ownership.
+- Coupling, cohesion, dependency direction, and circular dependencies.
+- Duplicated business logic and inconsistent abstractions.
+- Overengineering and unnecessary complexity.
+- Violations of important domain invariants.
+- Architectural weaknesses that make testing or future changes difficult.
+
+### B. Critical Business Flows
+- Main user and system workflows.
+- State transitions and business rules.
+- Validation and failure handling.
+- Permissions and access-control boundaries.
+- Transactions, external integrations, and partial failures.
+- Important edge cases and recovery behavior.
+
+### C. Security and Privacy
+- Authentication and authorization enforcement.
+- Cross-user or cross-tenant data exposure.
+- Trust boundaries and untrusted input handling.
+- Injection, file handling, unsafe deserialization, and other applicable vulnerability classes.
+- Secrets management and sensitive data exposure.
+- Dependency, configuration, and infrastructure risks.
+- Abuse prevention and resource exhaustion.
+
+Trace relevant execution paths rather than relying on isolated code patterns.
+
+### D. Data Access and Integrity
+- Query correctness and efficiency.
+- N+1 queries and avoidable database calls.
+- Transaction boundaries and concurrency.
+- Database constraints and validation.
+- Migration safety and schema compatibility.
+- Pagination, ordering, and filtering.
+- Duplicate processing, lost updates, and inconsistent state.
+
+### E. Performance and Scalability
+- Expensive operations on critical paths.
+- Unbounded data loading and memory growth.
+- Repeated computation and unnecessary allocations.
+- Blocking I/O and excessive external calls.
+- Inefficient caching or invalidation.
+- Concurrency limits and resource management.
+- Potential bottlenecks as usage or data volume grows.
+
+Distinguish code-supported performance problems from hypotheses requiring profiling or benchmarking.
+
+### F. Error Handling and Reliability
+- Unhandled or swallowed exceptions.
+- Missing timeouts and cancellation.
+- Retry behavior and idempotency.
+- Resource cleanup and graceful failure.
+- Partial failures across services.
+- Silent data loss and inconsistent state.
+- Inadequate diagnostics for critical operations.
+
+### G. Testing and Verification
+- Coverage of critical business rules and failure paths.
+- Missing regression, integration, and security tests.
+- Weak assertions and excessive mocking.
+- Flaky or order-dependent tests.
+- Important behavior that is difficult to test.
+- Gaps between documented behavior and actual verification.
+
+Do not equate low test coverage with a confirmed production defect. Explain the risk and verification gap.
+
+### H. Dependencies, Configuration, and Operations
+- Dependency health and verifiable security advisories.
+- Unnecessary dependencies and version conflicts.
+- Configuration defaults and environment assumptions.
+- Secrets, permissions, and infrastructure security.
+- Build and deployment reliability.
+- Resource limits, health checks, and graceful shutdown where relevant.
+- CI and development workflow weaknesses.
+
+### I. Code Quality and Documentation
+- Naming, complexity, duplication, dead code, and unclear responsibilities.
+- Inconsistent conventions that materially reduce maintainability.
+- Misleading comments and outdated documentation.
+- Missing setup or operational instructions.
+- Technical debt that creates a concrete, recurring engineering cost.
+
+## 3. Review Strategy
+
+For large repositories, do not attempt to inspect every file superficially and then claim a complete audit.
+
+Instead:
+
+1. Build a high-level map of the repository.
+2. Identify high-risk modules and critical flows.
+3. Inspect those areas in depth.
+4. Expand into related modules and dependencies where the evidence warrants it.
+5. Maintain a consolidated list of candidate findings.
+6. Verify each candidate against the relevant implementation and safeguards.
+7. Group repeated symptoms by their underlying root cause.
+8. Rank findings by severity, likelihood, impact, and prevalence.
+9. Summarize areas inspected and areas not inspected.
+
+If the repository is too large for a single pass, report the review as partial and identify the highest-value next areas to inspect.
+
+## 4. Prioritize Systemic Problems
+
+Prefer findings that explain a meaningful recurring problem, such as:
+- Authorization checks consistently missing at a service boundary.
+- A shared abstraction producing incorrect behavior across multiple modules.
+- Repeated unsafe database access patterns.
+- A common error-handling mechanism that hides failures.
+- A dependency or configuration weakness affecting multiple services.
+- A recurring testing gap around critical business invariants.
+
+For each systemic finding:
+- Explain the underlying root cause.
+- Identify representative affected components.
+- Describe the broader impact.
+- Recommend a fix at the appropriate architectural level.
+- Mention other affected locations when they materially help remediation.
+
+Avoid producing dozens of findings for the same root cause.
+
+## 5. Verification Requirements
+
+Run relevant tests, linters, static-analysis tools, or security checks only when available, appropriate, and safe.
+
+- Report the actual commands or checks performed and their outcomes.
+- Distinguish successful execution from partial execution.
+- Identify unavailable tools and uninspected areas.
+- Do not assume tests pass merely because test files exist.
+- Do not claim a dependency scan or security audit occurred unless it actually did.
+- Do not modify repository files during verification.
+
+## 6. Output Format
+
+### A. Executive Summary
+Include:
+- Repository and scope reviewed.
+- Main technologies and architecture, where established.
+- Overall assessment: Good, acceptable with concerns, needs changes, or insufficient evidence.
+- Overall risk level.
+- Finding counts by severity.
+- Review coverage and important limitations.
+
+### B. Prioritized Findings
+List actionable findings in descending severity using the format defined in @code-review-standards.mdc.
+
+Include evidence, relevant locations, impact, triggering conditions, confidence, and remediation.
+
+For repository-wide findings, distinguish systemic issues from isolated defects.
+
+### C. Positive Observations
+Identify important safeguards, useful abstractions, effective tests, and sound engineering practices worth preserving.
+
+### D. Prioritized Action Plan
+
+Group recommended work into:
+
+1. **Immediate:** Critical security, data integrity, and severe correctness issues.
+2. **Short term:** High-impact defects, reliability problems, and meaningful performance issues.
+3. **Medium term:** Recurring maintainability problems and important testing gaps.
+4. **Long term:** Architectural improvements and lower-priority technical debt.
+
+Only include actions justified by the evidence.
+
+### E. Verification Summary
+Report:
+- Tests and tools actually executed.
+- Results and failures.
+- Areas that could not be verified.
+- Important assumptions and remaining risks.
+
+## Final Instruction
+
+Optimize for high-value findings and a defensible assessment of repository health.
+
+Do not confuse a broad review with exhaustive verification. Be transparent about coverage, prioritize root causes, avoid speculative claims, and do not modify files unless explicitly authorized.
