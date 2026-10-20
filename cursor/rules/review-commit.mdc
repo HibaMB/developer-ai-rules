@@ -1,0 +1,110 @@
+markdown
+
+---
+description: Review a specific Git commit, commit range, branch diff, or pull request for actionable regressions and defects.
+alwaysApply: false
+---
+
+# Commit and Change Review
+
+## Purpose
+
+Review a specific set of code changes for meaningful defects introduced by those changes.
+
+Follow the standards in @code-review-standards.mdc.
+
+The review is read-only. Do not edit files, apply fixes, stage changes, or create commits.
+
+## 1. Establish the Review Target
+
+Determine the requested target:
+- A single commit SHA.
+- A range of commits.
+- A feature branch compared with a base branch.
+- A pull request or its associated diff.
+
+If the target is unclear, ask the user to specify it.
+
+For a single commit, inspect the commit diff against its first parent unless the user specifies otherwise.
+
+For a branch comparison, use the intended base and target refs. Understand the difference between a direct commit comparison and a merge-base-based branch comparison.
+
+Inspect the working tree before running commands that could affect repository state. Never reset, clean, checkout, or otherwise alter the user's work.
+
+## 2. Inspect the Changes
+
+1. Read the complete relevant diff.
+2. Identify the purpose and intended behavior of the changes.
+3. Inspect surrounding code and related callers.
+4. Trace relevant data flows, authorization checks, error handling, and external dependencies.
+5. Inspect related tests, configuration, schemas, migrations, and API contracts.
+6. Check interactions between changed files and between commits in the range.
+7. Run relevant tests or static-analysis tools when available, appropriate, and safe.
+
+Do not assume the diff alone contains enough context to establish correctness.
+
+## 3. Review Priorities
+
+Prioritize:
+1. Security vulnerabilities and access-control failures.
+2. Incorrect behavior, regressions, and broken business rules.
+3. Data corruption, consistency issues, and unsafe migrations.
+4. Reliability problems and unhandled failure paths.
+5. Significant performance or scalability regressions.
+6. API compatibility and integration failures.
+7. Maintainability problems that materially increase defect risk.
+8. Missing tests for important behavior.
+
+Apply the full standards in the master policy where relevant.
+
+## 4. Distinguish New and Existing Issues
+
+Focus on issues introduced or materially worsened by the target changes.
+
+- Report a new defect when the changed code introduces it.
+- Report a regression when existing behavior is broken.
+- Report an existing issue only when the changes materially worsen its impact or make it directly relevant to the requested review.
+- Do not present unrelated pre-existing problems as findings against the commit.
+- If a finding depends on pre-existing code, explain how the target change triggers or exposes it.
+
+## 5. Validate Each Finding
+
+Before reporting a finding:
+- Identify the exact problematic behavior.
+- Establish the relevant execution path and triggering conditions.
+- Inspect nearby safeguards and callers.
+- Check whether existing tests or validations address the concern.
+- Determine whether the issue is confirmed or still requires verification.
+- Assess realistic impact and severity.
+
+Prefer references to changed lines. If the root cause is outside the diff, cite the relevant location and explain its relationship to the change.
+
+Do not report a concern merely because a particular coding pattern could be problematic in another context.
+
+## 6. Output Format
+
+Start with:
+
+### Review Summary
+- **Target:** Commit, range, branch comparison, or pull request.
+- **Scope:** Files and behavior inspected.
+- **Assessment:** Good, acceptable with concerns, needs changes, or insufficient evidence.
+- **Risk:** Critical, high, medium, low, or undetermined.
+- **Findings:** Counts by severity.
+- **Verification:** Tests and checks actually executed.
+
+List findings in descending severity using the format defined in @code-review-standards.mdc.
+
+Each finding must explain the problem, triggering conditions, impact, location, remediation, and a useful regression test where appropriate.
+
+Then provide:
+- Positive observations.
+- Recommended fixes in priority order.
+- Test and verification gaps.
+- Limitations or unverified assumptions.
+
+If no findings are identified, state that no actionable defects were found within the reviewed scope. Do not imply that all possible defects have been ruled out.
+
+## Final Instruction
+
+Review the changes as a careful, independent reviewer. Focus on actionable defects and regressions, not stylistic preferences. Preserve the user's work and do not modify the repository.
